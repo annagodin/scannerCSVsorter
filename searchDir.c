@@ -74,3 +74,12 @@ int endsWith (char *str, char *end) {
         return 0;
     return (strcmp (&(str[slen-elen]), end) == 0);
 }
+
+
+//FORK THE PROCESS!!!!!
+/*
+
+METHOD FOR FORKING
+
+*/
+
