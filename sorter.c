@@ -10,7 +10,7 @@
 //-c blah -d boo -o haii
 
 
-
+int numProcesses;
 
 
 void freeLL(CSVrecord *frontRec){
@@ -179,8 +179,177 @@ void printCSV (CSVrecord *frontRec){
 
 }
 
+//writes CSV to a file
+void writeCSV (CSVrecord *frontRec, FILE *sorted){
+	CSVrecord *ptr = frontRec;
+	//ptr=ptr->next;
+	while(ptr!=NULL){
+		int i;
+		for(i=0;i<ptr->numCols; i++){		
+			if(ptr->data[i]==NULL){
+				fprintf(sorted,"");
+			}else {
+				fprintf(sorted,"%s",ptr->data[i]);
+			}
+			
+			if(i<ptr->numCols-1){
+				fprintf(sorted,",");
+			}
+		}
+		fprintf(sorted,"\n");
+		ptr=ptr->next;
+	}
+
+}
+
+//sort function that takes in a file, col to sort, filename, and outputDir
+//writes to a new file
+void sort(FILE *file, char *colToSort, char* fileName, char *outputDir){
+	
+	int sortPos=0;
+	char* str;
+	str = (char*)malloc(sizeof(char)*900); //string buffer
+	
+	char* token;
+	token = (char*)malloc(sizeof(char)*200);
+
+	//get headers
+	fgets(str, 900, file);
 
 
+	str=stripNewLineChar(str,strlen(str));
+
+   	char* rest = (char*)malloc(sizeof(char)*800);
+   	rest = str;
+   	
+   	hNode *headersFront = NULL;
+   	int count = 0;
+   	//tokenizes the headers
+   	while ((token = strsep(&rest, ",")) != NULL){
+	
+        	//loads headers into array
+        	char* data = malloc((strlen(token)+1)*sizeof(char));
+        
+        	hNode *node = malloc(sizeof(hNode));
+        	if (token[strlen(token)-1] == '\n'){
+        		//printf("stripping newline"); 
+				token=stripNewLineChar(token,strlen(token));
+		    } 
+        	strcpy(data,token);
+        	node->data=data;
+        	addhNodeToEnd(&headersFront, node);
+  	
+        	//finds col pos to sort by
+        	if(strcmp(token,colToSort)==0){
+        		sortPos=count;       	
+        	}
+        	
+        	count++;
+       }
+
+   //sets the number of columns
+   int numCols = count;
+   
+   //pointer to the front of LL
+   CSVrecord * frontRec = NULL;
+    
+	int i=0;
+	
+	while(fgets(str,900,file)!=NULL){ //EACH ITERATION IS READING ONE LINE	
+		CSVrecord *record = malloc(sizeof(CSVrecord));
+		record->next=NULL;
+		record->data=malloc(numCols*sizeof(char*)); 
+		
+		count=0;
+					
+		char* parseStr = (char*)malloc((strlen(str)+1)*sizeof(char));
+		parseStr=str;
+			//printf("some testing shit\n");
+			int index = 0;
+			while ((token = strsep(&parseStr, ",")) != NULL) {
+				if (token[strlen(token)-1] == '\n'){ 
+					token=stripNewLineChar(token,strlen(token));
+				} 			
+				//QUOTE CASE if theres a quote at the beginning of a token aka theres a COMMA within the field
+		    	if(token[0]=='"'){
+		    		//first token in quote
+		    		char* append = (char*)malloc(strlen(parseStr)*sizeof(char));	
+		    		strcpy(append, token);		
+	    			if (token[strlen(token)-1] == '\n'){ 
+						token=stripNewLineChar(token,strlen(token));
+					}  	//end first token in quote			
+					
+					//following tokens in quote;
+					int counting=1;					
+		    		do{		    			 				    			
+		    			token = strsep(&parseStr, ",");	
+		    			if (token==NULL){
+		    				break;
+		    			} 
+		    			append[strlen(append)]=',';		    			
+		    			if (token[strlen(token)-1] == '\n'){ 
+							token=stripNewLineChar(token,strlen(token));
+						}								 
+						counting++;   
+						strcat(append,token);				    		
+		    		} while (searchForQuote(token)==0); 
+		   			
+		   			token = append;		   				   				   					   					   			
+		    	} //END QUOTE CASE
+		    	
+		    	//empty field
+		    	if (strcmp(token,"")==0){		    		
+		    		token = NULL;
+		    	}		    					
+				
+				//*****TOKEN LOADED INTO A STRUCT
+				if(index==sortPos){
+					if (token==NULL){
+						record->sortVal=NULL;					
+					} else{
+						record->sortVal=malloc(strlen(token)*sizeof(char));
+						strcpy(record->sortVal,token);
+					}
+				}
+				if(token!=NULL){
+					record->data[index] = malloc(strlen(token)*sizeof(char));
+					strcpy(record->data[index], token);
+				} else {
+					record->data[index]=NULL;
+				}				
+				index++;				
+		  	 } //END LINE (RECORD)
+			
+			record->numCols=numCols;
+			//ADD RECORD TO LL HERE		
+			addRecToEnd(&frontRec,record);			
+			//HERE THE RECORD SHOULD BE COMPLETE
+					
+		i++;
+	} //END FILE
+	
+	mergesort(&frontRec);
+	
+	char* sortedfileName = "sortedTest.csv";
+	FILE *sortedFile;
+	sortedFile=fopen(sortedfileName, "w");
+
+	int c=0;
+   	//prints headers
+   	hNode *ptr = headersFront;
+   	while (ptr!=NULL){
+   		fprintf(sortedFile,"%s",ptr->data);
+   		ptr=ptr->next;
+   		if(c<numCols-1){
+   			fprintf(sortedFile,",");
+   		}
+   		c++;
+   	}
+   	fprintf(sortedFile, "\n");
+	writeCSV(frontRec,sortedFile);
+
+	//printf("done\n");
+}
 
 
 
@@ -201,43 +370,60 @@ int main(int argc, char *argv[] ){ //-----------------------MAIN---------
 
 	//if no -d, only search current directory
 	//if no -o, output to current directory
-	if(argv[1]==NULL){
-		printf("error, there is no column specified!\n");
-		return 1;
+	if(argc<3){
+		printf("Error, not enough arguments!\n");
+		exit(EXIT_FAILURE);
 	}
 
-	
-	colToSort = (char*)malloc(strlen(argv[2])*sizeof(char)+1);
-	strcpy(colToSort,argv[2]);
+	if(strcmp(argv[1], "-c") == 0){
+		colToSort = (char*)malloc(strlen(argv[2])*sizeof(char)+1);
+		strcpy(colToSort,argv[2]);
+	} else {
+		printf("Error, invalid flag!\n");
+		exit(EXIT_FAILURE);
+	}
 
 
-	if(argc!=7){ //not all flags are given
-		//check for -d and -o
-		if(argv[3][1]=='d'){
+	if(argc==5){ //only 2 flags 
+		if(strcmp(argv[3], "-d") == 0) {
 			hasDir=1;
 			hasOut=0;
 			searchDir = (char*)malloc(strlen(argv[4])*sizeof(char)+1);
 			strcpy(searchDir,argv[4]);
-		} else if (argv[3][1]=='o'){
-			hasOut=1;
+		} else if (strcmp(argv[3], "-o") == 0) {
 			hasDir=0;
+			hasOut=1;
 			outputDir = (char*)malloc(strlen(argv[4])*sizeof(char)+1);
 			strcpy(outputDir,argv[4]);
 		} else {
-			hasOut=0;
-			hasDir=0;
+			printf("Error: Incorrect parameters\n");
+			exit(EXIT_FAILURE);
+		}
+	} else if (argc==7){ //all flags present
+		if(strcmp(argv[3], "-d") == 0) {
+			searchDir = (char*)malloc(strlen(argv[4])*sizeof(char)+1);
+			strcpy(searchDir,argv[4]);
+			hasDir=1;
+		} else {
+			printf("Error: Incorrect parameters for 2nd argument\n");
+			exit(EXIT_FAILURE);
 		}
 
-	} else { //all flags present
-		searchDir = (char*)malloc(strlen(argv[4])*sizeof(char)+1);
-		strcpy(searchDir,argv[4]);
-		hasDir=1;
-
-		outputDir = (char*)malloc(strlen(argv[6])*sizeof(char)+1);
-		strcpy(outputDir,argv[6]);
-		hasOut=1;
+		if (strcmp(argv[5],"-o")==0){
+			outputDir = (char*)malloc(strlen(argv[6])*sizeof(char)+1);
+			strcpy(outputDir,argv[6]);
+			hasOut=1;
+		} else {
+			printf("Error: Incorrect parameters for 3rd argument\n");
+			exit(EXIT_FAILURE);
+		}
+	} else if (argc>7||argc==4||argc==6){
+		if(argc>7)
+			printf("Error: Too many parameters\n");
+		else
+			printf("Error: Incorrent arguments\n");
+		exit(EXIT_FAILURE);
 	}
-
 	
 
 	printf("colToSort:\t%s\n",colToSort);
@@ -247,6 +433,11 @@ int main(int argc, char *argv[] ){ //-----------------------MAIN---------
 		printf("outputDir:\t%s\n",outputDir);
 
 	//dirwalk("../../../spring18",0);
+	
+	FILE *file = fopen("small.csv", "r");
+	sort(file, colToSort, "small.csv", "");
+
+	//dirwalk("../../hw0",0);
 
 	return 0;
-}
+} //-----------------------------------ENDMAIN

@@ -23,15 +23,15 @@
 void dirwalk(char *dir,int depth)
 {
     DIR *dp;
-    char str[30]; 
-    char name[30]; 
+    char str[50]; 
+    char name[50]; 
     struct dirent *entry;
     struct stat statbuf;
 
     if((dp = opendir(dir)) == NULL)
     {
-        fprintf(stderr,"Cannot open directory: %s\n",dir);
-        return;
+        fprintf(stderr,"Error: cannot open directory: %s\n",dir);
+        exit(EXIT_FAILURE);
     }
 
     chdir(dir);
@@ -41,8 +41,8 @@ void dirwalk(char *dir,int depth)
         lstat(entry->d_name,&statbuf);
         if(S_ISDIR(statbuf.st_mode))
         {
-        /* Found a directory ,but ignore . and .. */
-            if(strcmp(".",entry->d_name) ==0 || strcmp("..",entry->d_name) == 0)
+        /* Found a directory , but ignore . and .. */
+            if(strcmp(".",entry->d_name) == 0 || strcmp("..",entry->d_name) == 0)
                 continue;
             printf("%*s %s/\n",depth,"",entry->d_name);
 
@@ -51,7 +51,7 @@ void dirwalk(char *dir,int depth)
         }
         else if(S_ISREG(statbuf.st_mode))
         {
-        //if (endsWith (entry->d_name, ".csv"))
+            if (endsWith (entry->d_name, ".csv"))
                 printf("%*s %s \n",depth,"",entry->d_name);   
             strcpy(str,entry->d_name);
             strcpy(name,str); 
@@ -60,8 +60,8 @@ void dirwalk(char *dir,int depth)
         //printf("\nFile name is %s\n",name);
     }
 
-chdir("..");
-closedir(dp);
+    chdir("..");
+    closedir(dp);
 }
 
 
