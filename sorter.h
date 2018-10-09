@@ -16,7 +16,7 @@ typedef struct hNode{
 
 
 //in searchDir
-void dirwalk(char *,int);
+void dirwalk(char *dir,char *out, char *colToSort, int depth);
 int endsWith (char *str, char *end);
 
 

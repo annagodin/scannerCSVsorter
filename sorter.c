@@ -7,10 +7,11 @@
 #include <sys/stat.h>
 #include <stdlib.h>
 #include "sorter.h"
+#include <errno.h>
 //-c blah -d boo -o haii
 
 
-int numProcesses;
+int numProcesses=0;
 
 
 void freeLL(CSVrecord *frontRec){
@@ -205,8 +206,18 @@ void writeCSV (CSVrecord *frontRec, FILE *sorted){
 //sort function that takes in a file, col to sort, filename, and outputDir
 //writes to a new file
 void sort(FILE *file, char *colToSort, char* fileName, char *outputDir){
-	
-	int sortPos=0;
+	//if the specified output directory does not have a slash at the end - add one
+	if (strcmp(outputDir,"")!=0&&outputDir[strlen(outputDir)-1]!='/'){
+		char appendSlash[strlen(outputDir)+2];
+		strcpy(appendSlash,outputDir);
+		strcat(appendSlash,"/");
+		outputDir=malloc((strlen(outputDir)+2)*sizeof(char));
+		strcpy(outputDir,appendSlash);
+	}
+	//printf("outputDir is %s\n",outputDir);
+
+
+	int sortPos=-1;
 	char* str;
 	str = (char*)malloc(sizeof(char)*900); //string buffer
 	
@@ -224,6 +235,7 @@ void sort(FILE *file, char *colToSort, char* fileName, char *outputDir){
    	
    	hNode *headersFront = NULL;
    	int count = 0;
+
    	//tokenizes the headers
    	while ((token = strsep(&rest, ",")) != NULL){
 	
@@ -247,9 +259,22 @@ void sort(FILE *file, char *colToSort, char* fileName, char *outputDir){
         	count++;
        }
 
+       if(sortPos==-1){
+       		printf("ERROR: Column specified is not in the CSV that is being processed\n");
+       		exit(EXIT_FAILURE);
+       }
+
+      
+
+
+
    //sets the number of columns
    int numCols = count;
    
+
+
+
+
    //pointer to the front of LL
    CSVrecord * frontRec = NULL;
     
@@ -328,27 +353,50 @@ void sort(FILE *file, char *colToSort, char* fileName, char *outputDir){
 		i++;
 	} //END FILE
 	
+	//sorts the damn LL
 	mergesort(&frontRec);
 	
-	char* sortedfileName = "sortedTest.csv";
-	FILE *sortedFile;
-	sortedFile=fopen(sortedfileName, "w");
+	//length of the name of the sorted file
+	int lengthSorted = strlen(outputDir)+strlen(fileName)+strlen(colToSort)+10;
+	char sortedFileName[lengthSorted];
+	
+	//trim the .csv off the file
+	char* trimmedFileName=malloc(strlen(fileName)*sizeof(char));
+	strcpy(trimmedFileName,fileName);
+	trimmedFileName[strlen(fileName)-4]='\0';
 
-	int c=0;
+	printf("trimmed file name is %s\n",trimmedFileName);
+	char* extension = ".csv";
+	
+	//if output directory specified, add slash after that dir, if not then no slash
+	if(strcmp(outputDir,"")!=0)
+		snprintf(sortedFileName, lengthSorted, "%s/%s-sorted-%s%s", outputDir, trimmedFileName, colToSort, extension);
+	else
+		snprintf(sortedFileName, lengthSorted, "%s-sorted-%s%s", trimmedFileName, colToSort, extension);
+	
+	printf("sorted file name:\t%s\n",sortedFileName);
+	
+	//creates new file with the sorted file name
+	FILE *sorted;
+	sorted=fopen(sortedFileName, "w");
+
+
+   	int c=0;
    	//prints headers
    	hNode *ptr = headersFront;
    	while (ptr!=NULL){
-   		fprintf(sortedFile,"%s",ptr->data);
+   		fprintf(sorted,"%s",ptr->data);
    		ptr=ptr->next;
    		if(c<numCols-1){
-   			fprintf(sortedFile,",");
+   			fprintf(sorted,",");
    		}
    		c++;
    	}
-   	fprintf(sortedFile, "\n");
-	writeCSV(frontRec,sortedFile);
+   	fprintf(sorted, "\n");	
 
-	//printf("done\n");
+	writeCSV(frontRec,sorted);
+
+
 }
 
 
@@ -435,7 +483,23 @@ int main(int argc, char *argv[] ){ //-----------------------MAIN---------
 	//dirwalk("../../../spring18",0);
 	
 	FILE *file = fopen("small.csv", "r");
-	sort(file, colToSort, "small.csv", "");
+	if (file==0){
+		printf("ERROR: %s\n", strerror(errno));
+		exit(EXIT_FAILURE);
+	}
+	
+	sort(file, colToSort, "small.csv", "testDir");
+
+	// if(hasDir == 1 && hasOut == 0) { //-d 
+	// 	dirwalk(searchDir, "", colToSort,0);
+	// } else if(hasDir  == 1 && hasOut == 1)	{ //-d and -o
+	// 	dirwalk(searchDir, outputDir, colToSort,0);
+	// } else if(hasDir  == 0 && hasOut == 1)	{ //-o
+	// 	dirwalk("./", outputDir, colToSort,0);
+	// } else { //neither 
+	// 	dirwalk("./", "", colToSort,0);
+	// }
+
 
 	//dirwalk("../../hw0",0);
 
