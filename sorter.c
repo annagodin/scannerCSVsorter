@@ -227,7 +227,6 @@ void sort(FILE *file, char *colToSort, char* fileName, char *outputDir){
 	//get headers
 	fgets(str, 900, file);
 
-
 	str=stripNewLineChar(str,strlen(str));
 
    	char* rest = (char*)malloc(sizeof(char)*800);
@@ -260,7 +259,7 @@ void sort(FILE *file, char *colToSort, char* fileName, char *outputDir){
        }
 
        if(sortPos==-1){
-       		printf("ERROR: Column specified is not in the CSV that is being processed\n");
+       		printf("ERROR: Column specified is not a header in the CSV that is being processed\n");
        		exit(EXIT_FAILURE);
        }
 
@@ -273,7 +272,7 @@ void sort(FILE *file, char *colToSort, char* fileName, char *outputDir){
    
 
 
-
+   //printf("cp1\n");
 
    //pointer to the front of LL
    CSVrecord * frontRec = NULL;
@@ -342,10 +341,24 @@ void sort(FILE *file, char *colToSort, char* fileName, char *outputDir){
 				} else {
 					record->data[index]=NULL;
 				}				
-				index++;				
+				index++;		
+
+				
+				
+
+				
+
 		  	 } //END LINE (RECORD)
 			
+
+
 			record->numCols=numCols;
+
+			if(index!=numCols){
+				printf("ERROR: invalid CSV!\n");
+				return;
+			}		
+
 			//ADD RECORD TO LL HERE		
 			addRecToEnd(&frontRec,record);			
 			//HERE THE RECORD SHOULD BE COMPLETE
@@ -488,7 +501,9 @@ int main(int argc, char *argv[] ){ //-----------------------MAIN---------
 		exit(EXIT_FAILURE);
 	}
 	
-	sort(file, colToSort, "small.csv", "testDir");
+	//sort(file, colToSort, "small.csv", "testDir");
+	int numP = numProc("./");
+	printf("numproc is \t%d\n",numP);
 
 	// if(hasDir == 1 && hasOut == 0) { //-d 
 	// 	dirwalk(searchDir, "", colToSort,0);

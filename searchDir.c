@@ -70,11 +70,45 @@ int endsWith (char *str, char *end) {
     return (strcmp (&(str[slen-elen]), end) == 0);
 }
 
+//counts the number of processes that this directory search will require
+int numProc(char *dir){
+    int numP=0;
+    DIR *dp;
+    char str[80]; 
+    char name[80]; 
+    struct dirent *entry;
+    struct stat statbuf;
 
-//FORK THE PROCESS!!!!!
-/*
+    if((dp = opendir(dir)) == NULL) {
+        fprintf(stderr,"Error: cannot open directory: %s\n",dir);
+        exit(EXIT_FAILURE);
+    }
 
-METHOD FOR FORKING
+    chdir(dir);
 
-*/
+    while((entry = readdir(dp)) != NULL){
+        lstat(entry->d_name,&statbuf);
+        if(S_ISDIR(statbuf.st_mode)) { //ITS A DIRECTORY
+            /* Found a directory , but ignore . and .. */
+            if(strcmp(".",entry->d_name) == 0 || strcmp("..",entry->d_name) == 0 || strcmp(".git",entry->d_name) == 0)
+                continue;
+            numP++;
+            printf("nump bc found directory, [%s]:\t%d\n",entry->d_name,numP);
+            /*funtion is called recursively at a new indent level */
+            numP += numProc(entry->d_name);
+            printf("nump after recursing %s:\t%d\n",entry->d_name,numP);
+        }
+        else if(S_ISREG(statbuf.st_mode)){ //ITS A FILE, FORK TO SORT FILE
+            if (endsWith (entry->d_name, ".csv")){
+                numP++;
+                printf("found a csv, [%s] in dir [%s] nump:\t%d\n",entry->d_name, dir,numP);
+            }  
+            strcpy(str,entry->d_name);
+            strcpy(name,str); 
+        }
+    }
 
+        chdir("..");
+        closedir(dp);
+        return numP;
+}
