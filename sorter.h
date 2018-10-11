@@ -16,7 +16,7 @@ typedef struct hNode{
 
 
 //in searchDir
-void dirwalk(char *dir,char *out, char *colToSort, int depth);
+void dirwalk(char *dir,char *out, char *colToSort);
 int endsWith (char *str, char *end);
 int numProc(char *dir);
 
@@ -29,6 +29,8 @@ char* trimWhiteSpace(char* token);
 void printAllRecords (CSVrecord * frontRec);
 void printRecNode(CSVrecord *rec);
 void addRecToEnd(CSVrecord** head, CSVrecord *node);
+void sort(FILE *file, char *colToSort, char* fileName, char *outputDir);
+
 
 //in mergesort.c
 char* toLowerCase (char* str);

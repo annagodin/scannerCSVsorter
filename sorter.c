@@ -14,6 +14,38 @@
 int numProcesses=0;
 
 
+
+int isSubstr(char *inpText, char *pattern) {
+    int inplen = strlen(inpText);
+    while (inpText != NULL) {
+
+        char *remTxt = inpText;
+        char *remPat = pattern;
+
+        if (strlen(remTxt) < strlen(remPat)) {
+            /* printf ("length issue remTxt %s \nremPath %s \n", remTxt, remPat); */
+            return -1;
+        }
+
+        while (*remTxt++ == *remPat++) {
+          //  printf("remTxt %s \nremPath %s \n", remTxt, remPat);
+            if (*remPat == '\0') {
+             //s   printf ("match found \n");
+                return inplen - strlen(inpText+1);
+            }
+            if (remTxt == NULL) {
+                return -1;
+            }
+        }
+        remPat = pattern;
+
+        inpText++;
+    }
+}
+
+
+
+
 void freeLL(CSVrecord *frontRec){
 	CSVrecord *curr = NULL;
 	while ((curr=frontRec)!=NULL){
@@ -259,8 +291,8 @@ void sort(FILE *file, char *colToSort, char* fileName, char *outputDir){
        }
 
        if(sortPos==-1){
-       		printf("ERROR: Column specified is not a header in the CSV that is being processed\n");
-       		exit(EXIT_FAILURE);
+       		printf("ERROR: Column specified is not a header in the CSV[%s] that is being processed\n",fileName);
+       		return;
        }
 
       
@@ -412,6 +444,198 @@ void sort(FILE *file, char *colToSort, char* fileName, char *outputDir){
 
 }
 
+//checks if a file ends with a certain string
+// (in our case we need to check if it ends with a .csv
+int endsWith (char *str, char *end) {
+    size_t slen = strlen (str);
+    size_t elen = strlen (end);
+    if (slen < elen)
+        return 0;
+    return (strcmp (&(str[slen-elen]), end) == 0);
+}
+
+
+
+
+
+
+
+
+
+
+
+
+//FORKING STUFF AHEAD--------------------------------------
+
+
+
+//recursively travserses a directory and prints subdirectories
+void dirwalk(char *dir,char *out, char *colToSort){
+    //printf("hai\n");
+    DIR *dp;
+    struct dirent *entry;
+    struct stat statbuf;
+    int status1, status2;
+    int pid1, pid2;
+
+    if((dp = opendir(dir)) == NULL) {
+        fprintf(stderr,"Error: cannot open directory: %s\n",dir);
+        exit(EXIT_FAILURE);
+    }
+
+    chdir(dir);
+
+    
+    printf("starting dir [%s]\n", dir);
+
+    while((entry = readdir(dp)) != NULL){
+    	//printf("ha3\n");
+        lstat(entry->d_name,&statbuf);
+        if(S_ISDIR(statbuf.st_mode)) { //ITS A DIRECTORY
+            /* Found a directory , but ignore . and .. */
+            if(strcmp(".",entry->d_name) == 0 || strcmp("..",entry->d_name) == 0 || strcmp(".git",entry->d_name) == 0)
+                continue;
+
+            printf("Found directory, [%s] in dir [%s]\n",entry->d_name,dir);
+           // printf("%s/\n",entry->d_name); //FORK HERE AND RECURSE
+            pid1=fork();
+            if(pid1==0){ //child
+                //recurse here
+                /*funtion is called recursively at a new indent level */
+                dirwalk(entry->d_name,out,colToSort);
+                exit(0);
+            } else { //parent
+                printf("PID1:\t\t\t%d\n",pid1);
+                waitpid(pid1, &status1, WUNTRACED);
+                //np += WEXITSTATUS(status1);
+                // if(retpid>0){
+                //  numP++;
+                //  np++;
+                // }
+            }
+
+           //printf("hai3\n");
+            
+        }
+        else if(S_ISREG(statbuf.st_mode)){ //ITS A FILE, FORK TO SORT FILE
+            //printf("ha433\n");
+            //printf("its a csvvvvvv\n");
+            if (endsWith(entry->d_name, ".csv")){
+            	//printf("its a csv\n");
+                printf("found a csv, [%s] in dir [%s]\n",entry->d_name, dir);
+                
+
+                if(isSubstr(entry->d_name, "sorted")!=-1){
+                	printf("the csv, [%s] in dir [%s] has the word 'sorted', dont touch\n",entry->d_name, dir);
+                	continue;
+                }
+
+
+
+                printf("%s \n",entry->d_name); 
+                pid2=fork();
+                if(pid2==0){ //child
+                    //printf("will sort here!\n");
+                    FILE *file = fopen(entry->d_name, "r");
+                    if (file==0){
+                        printf("ERROR: %s\n", strerror(errno));
+                        return;
+                    }
+                    sort(file, colToSort, entry->d_name, out);
+                    exit(0);
+                } else { //parent
+                    printf("PID2:\t\t\t%d\n",pid2);
+                     waitpid(pid2, &status2, WUNTRACED);
+                    // WEXITSTATUS(status2);
+                    // if(retpid>0){
+                    //  numP++;
+                    //  np++;
+                    // }
+                 }
+            
+            }
+             
+
+        }
+
+    }
+     chdir("..");
+     closedir(dp);
+}
+
+
+
+
+//counts the number of processes that this directory search will require
+int numProc(char *dir){
+    int numP=0;
+    DIR *dp;
+    char str[80]; 
+    char name[80]; 
+    struct dirent *entry;
+    struct stat statbuf;
+
+    if((dp = opendir(dir)) == NULL) {
+        fprintf(stderr,"Error: cannot open directory: %s\n",dir);
+        exit(EXIT_FAILURE);
+    }
+
+    chdir(dir);
+
+    while((entry = readdir(dp)) != NULL){
+        lstat(entry->d_name,&statbuf);
+        if(S_ISDIR(statbuf.st_mode)) { //ITS A DIRECTORY
+            /* Found a directory , but ignore . and .. */
+            if(strcmp(".",entry->d_name) == 0 || strcmp("..",entry->d_name) == 0 || strcmp(".git",entry->d_name) == 0)
+                continue;
+            numP++;
+            //printf("nump bc found directory, [%s]:\t%d\n",entry->d_name,numP);
+            printf("Found directory, [%s] in dir [%s], numP: [%d]\n",entry->d_name,dir,numP);
+           
+            /*funtion is called recursively at a new indent level */
+            numP += numProc(entry->d_name);
+            //printf("nump after recursing %s:\t%d\n",entry->d_name,numP);
+        }
+        else if(S_ISREG(statbuf.st_mode)){ //ITS A FILE, FORK TO SORT FILE
+            if (endsWith (entry->d_name, ".csv")){
+                numP++;
+                //printf("found a csv, [%s] in dir [%s] nump:\t%d\n",entry->d_name, dir,numP);
+           		printf("found a csv, [%s] in dir [%s] numP: [%d]\n",entry->d_name, dir,numP);
+                
+
+            }  
+        }
+    }
+
+        chdir("..");
+        closedir(dp);
+        return numP;
+}
+
+
+
+
+
+
+
+//END FORKING STUFF-------------------------------------
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -493,7 +717,6 @@ int main(int argc, char *argv[] ){ //-----------------------MAIN---------
 	if(hasOut)
 		printf("outputDir:\t%s\n",outputDir);
 
-	//dirwalk("../../../spring18",0);
 	
 	FILE *file = fopen("small.csv", "r");
 	if (file==0){
@@ -501,19 +724,37 @@ int main(int argc, char *argv[] ){ //-----------------------MAIN---------
 		exit(EXIT_FAILURE);
 	}
 	
-	//sort(file, colToSort, "small.csv", "testDir");
-	int numP = numProc("./");
-	printf("numproc is \t%d\n",numP);
 
-	// if(hasDir == 1 && hasOut == 0) { //-d 
-	// 	dirwalk(searchDir, "", colToSort,0);
-	// } else if(hasDir  == 1 && hasOut == 1)	{ //-d and -o
-	// 	dirwalk(searchDir, outputDir, colToSort,0);
-	// } else if(hasDir  == 0 && hasOut == 1)	{ //-o
-	// 	dirwalk("./", outputDir, colToSort,0);
-	// } else { //neither 
-	// 	dirwalk("./", "", colToSort,0);
-	// }
+
+
+	//sort(file, colToSort, "small.csv", "testDir");
+	// char* cwd = (char*)malloc(100*sizeof(char));
+	// cwd = getcwd(cwd, sizeof(cwd));
+	// printf("this is the current dir: [%s]\n",cwd);
+	
+	 char cwd[256];
+    if (getcwd(cwd, sizeof(cwd)) == NULL)
+    	perror("getcwd() error");
+  	char* currDir = (char*)malloc(strlen(cwd)*sizeof(char)+1);
+  	strcpy(currDir,cwd);
+	
+  	int numP;
+	if(hasDir==0){
+		numP = numProc(currDir);
+	} else
+		numP=numProc(searchDir);
+
+	printf("numProc is \t%d\n\n\n",numP);
+
+	if(hasDir == 1 && hasOut == 0) { //-d 
+		dirwalk(searchDir, "", colToSort);
+	} else if(hasDir  == 1 && hasOut == 1)	{ //-d and -o
+		dirwalk(searchDir, outputDir, colToSort);
+	} else if(hasDir  == 0 && hasOut == 1)	{ //-o
+		dirwalk(cwd, outputDir, colToSort);
+	} else { //neither 
+		dirwalk(cwd, "", colToSort);
+	}
 
 
 	//dirwalk("../../hw0",0);

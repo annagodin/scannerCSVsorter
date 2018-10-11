@@ -11,7 +11,7 @@
 int numProcesses;
 int numP=0;
 
-void forkwalk(char *dir);
+int forkwalk(char *dir);
 void recSearch(int x);
 
 
@@ -34,8 +34,10 @@ int main(int argc, char *argv[] ){
 	//recSearch(x);
 
 	//printf("numProcesses:\t%d\n",numProcesses);
-	forkwalk("./");
+	int np = forkwalk("./");
 	printf("NUM PROCESSES BITCH:\t%d\n",numP);
+
+	printf("NP PLZ BE RIGHT:\t%d\n",np);
 }
 
 
@@ -107,8 +109,8 @@ void recSearch(int x){
 }
 
 
-void forkwalk(char *dir){
-    
+int forkwalk(char *dir){
+    int np=0;
     DIR *dp;
     struct dirent *entry;
     struct stat statbuf;
@@ -129,27 +131,31 @@ void forkwalk(char *dir){
             if(strcmp(".",entry->d_name) == 0 || strcmp("..",entry->d_name) == 0 || strcmp(".git",entry->d_name) == 0)
                 continue;
 
-            numP++;
+            //numP++;
             printf("numP bc found directory, [%s]:\t%d\n",entry->d_name,numP);
             
             pid1=fork();
             if(pid1==0){ //child
             	//recurse here
-            	 forkwalk(entry->d_name);
+            	 np+=forkwalk(entry->d_name);
             	 exit(0);
             } else { //parent
             	printf("PID1:\t\t\t%d\n",pid1);
-            	int retpid = waitpid(pid1, &status1, WUNTRACED);
-				if(retpid>0){
-					numP++;
-				}
+            	 numP++;
+            	 //np++;
+            	waitpid(pid1, &status1, WUNTRACED);
+				np += WEXITSTATUS(status1);
+				// if(retpid>0){
+				// 	numP++;
+				// 	np++;
+				// }
             }
            
             //printf("nump after recursing %s:\t%d\n",entry->d_name,numP);
         }
         else if(S_ISREG(statbuf.st_mode)){ //ITS A FILE, FORK TO SORT FILE
             if (endsWith (entry->d_name, ".csv")){ 
-                numP++;
+                //numP++;
                 printf("found a csv, [%s] in dir [%s] numP:\t%d\n",entry->d_name, dir,numP);
                 pid2=fork();
                 if(pid2==0){ //child
@@ -157,10 +163,14 @@ void forkwalk(char *dir){
                 	exit(0);
                 } else { //parent
                 	printf("PID2:\t\t\t%d\n",pid2);
-                	int retpid = waitpid(pid2, &status2, WUNTRACED);
-					if(retpid>0){
-						numP++;
-					}
+                	numP++;
+                	//np++;
+                	 waitpid(pid2, &status2, WUNTRACED);
+					 np += WEXITSTATUS(status2);
+					// if(retpid>0){
+					// 	numP++;
+					// 	np++;
+					// }
                 }
                 
             }  
@@ -169,6 +179,7 @@ void forkwalk(char *dir){
 
         chdir("..");
         closedir(dp);
+        return np;
         
 }
 
