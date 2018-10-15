@@ -128,7 +128,7 @@ int forkwalk(char *dir){
         if(S_ISDIR(statbuf.st_mode)) { //ITS A DIRECTORY
             
             //Found a directory , but ignore . and .. 
-            if(strcmp(".",entry->d_name) == 0 || strcmp("..",entry->d_name) == 0 || strcmp(".git",entry->d_name) == 0)
+            if(strcmp(".",entry->d_name) == 0 || strcmp("..",entry->d_name) == 0 ||  )
                 continue;
 
             //numP++;

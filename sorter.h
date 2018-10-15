@@ -14,9 +14,14 @@ typedef struct hNode{
 	struct hNode *next;
 }hNode;
 
+typedef struct pidNode{
+	int data;
+	struct pidNode *next;
+}pidNode;
+
 
 //in searchDir
-void dirwalk(char *dir,char *out, char *colToSort);
+void dirwalk(char *dir,char *out, char *colToSort, FILE *fp);
 int endsWith (char *str, char *end);
 int numProc(char *dir);
 
@@ -28,6 +33,8 @@ char* stripLastChar (char* token);
 char* trimWhiteSpace(char* token);
 void printAllRecords (CSVrecord * frontRec);
 void printRecNode(CSVrecord *rec);
+void addhNodeToEnd(hNode** head, hNode *node);
+void addpidNodeToEnd(pidNode** head, pidNode *node);
 void addRecToEnd(CSVrecord** head, CSVrecord *node);
 void sort(FILE *file, char *colToSort, char* fileName, char *outputDir);
 
