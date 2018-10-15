@@ -6,7 +6,7 @@
 #include <string.h>
 #include <sys/stat.h>
 #include <stdlib.h>
-#include "sorter.h"
+#include "scannerCSVsorter.h"
 #include <errno.h>
 //-c blah -d boo -o haii
 

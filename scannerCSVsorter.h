@@ -1,5 +1,5 @@
-#ifndef SORTER_H     
-#define SORTER_H
+#ifndef SCANNERCSVSORTER_H     
+#define SCANNERCSVSORTER_H
 
 
 typedef struct CSVrecord {

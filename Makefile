@@ -1,8 +1,8 @@
-all: sorter.c mergesort.o searchDir.o
+all: scannerCSVsorter.c mergesort.o
 
-sorter: sorter.o mergesort.o searchDir.o
-	gcc -Wall -o sorter sorter.o mergesort.o searchDir.o
+scannerCSVsorter: scannerCSVsorter.o mergesort.o
+	gcc -Wall -o scannerCSVsorter scannerCSVsorter.o mergesort.o
 mergesort.o: mergesort.c
 	gcc -c mergesort.c
 clean:
-	rm -f sorter mergesort.o searchDir.o
+	rm -f scannerCSVsorter mergesort.o
