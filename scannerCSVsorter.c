@@ -85,7 +85,9 @@ char* stripLastChar (char* token){
 	for (i=0; i<(strlen(token)-1); i++){
 		replace[i]=token[i];
 	}	
+	//free(token);
 	return replace;
+
 	
 }
 
@@ -98,7 +100,7 @@ char* stripFirstChar (char* token, int tokLen){
 		replace[j]=token[i];
 		j++;
 	}
-	
+	//free(token);
 	return replace;
 }
 
@@ -133,6 +135,7 @@ char* trimWhiteSpace(char* token){
 		index--;
 	}	
 	trimmed[index+1]='\0';	
+    //free(token);
     return trimmed;
 }
 
@@ -255,6 +258,7 @@ void writeCSV (CSVrecord *frontRec, FILE *sorted){
 //sort function that takes in a file, col to sort, filename, and outputDir
 //writes to a new file
 void sort(FILE *file, char *colToSort, char* fileName, char *outputDir){
+	//printf("hey\n");
 	//if the specified output directory does not have a slash at the end - add one
 	if (strcmp(outputDir,"")!=0&&outputDir[strlen(outputDir)-1]!='/'){
 		char appendSlash[strlen(outputDir)+2];
@@ -268,13 +272,13 @@ void sort(FILE *file, char *colToSort, char* fileName, char *outputDir){
 
 	int sortPos=-1;
 	char* str;
-	str = (char*)malloc(sizeof(char)*900); //string buffer
+	str = (char*)malloc(sizeof(char)*1200); //string buffer
 	
 	char* token;
 	token = (char*)malloc(sizeof(char)*200);
-
+	//printf("hey2\n");
 	//get headers
-	fgets(str, 900, file);
+	fgets(str, 1200, file);
 
 	str=stripNewLineChar(str,strlen(str));
 
@@ -283,7 +287,7 @@ void sort(FILE *file, char *colToSort, char* fileName, char *outputDir){
    	
    	hNode *headersFront = NULL;
    	int count = 0;
-
+   	//printf("hey3\n");
    	//tokenizes the headers
    	while ((token = strsep(&rest, ",")) != NULL){
 	
@@ -316,8 +320,7 @@ void sort(FILE *file, char *colToSort, char* fileName, char *outputDir){
        //sets the number of columns
    		int numCols = count;
 
-   
-
+  
    
    
 
@@ -330,24 +333,28 @@ void sort(FILE *file, char *colToSort, char* fileName, char *outputDir){
 	int i=0;
 	
 	while(fgets(str,900,file)!=NULL){ //EACH ITERATION IS READING ONE LINE	
+		//printf("hey5\n");
 		CSVrecord *record = malloc(sizeof(CSVrecord));
 		record->next=NULL;
 		record->data=malloc(numCols*sizeof(char*)); 
 		
 		count=0;
-					
-		char* parseStr = (char*)malloc((strlen(str)+1)*sizeof(char));
+
+		//printf("STRING: %s\n",str);
+
+		char* parseStr = (char*)malloc((strlen(str)+1)*sizeof(char)+1);
 		parseStr=str;
 			//printf("some testing shit\n");
 			int index = 0;
 			while ((token = strsep(&parseStr, ",")) != NULL) {
+				//printf("hey6\n");
 				if (token[strlen(token)-1] == '\n'){ 
 					token=stripNewLineChar(token,strlen(token));
 				} 			
 				//QUOTE CASE if theres a quote at the beginning of a token aka theres a COMMA within the field
 		    	if(token[0]=='"'){
 		    		//first token in quote
-		    		char* append = (char*)malloc(strlen(parseStr)*sizeof(char));	
+		    		char* append = (char*)malloc((strlen(parseStr)+1)*sizeof(char));	
 		    		strcpy(append, token);		
 	    			if (token[strlen(token)-1] == '\n'){ 
 						token=stripNewLineChar(token,strlen(token));
@@ -371,25 +378,37 @@ void sort(FILE *file, char *colToSort, char* fileName, char *outputDir){
 		   			token = append;		   				   				   					   					   			
 		    	} //END QUOTE CASE
 		    	
+		    	//printf("TOKEN: %s\n",token);
+		    	
+
 		    	//empty field
 		    	if (strcmp(token,"")==0){		    		
 		    		token = NULL;
 		    	}		    					
 				
+
+
 				//*****TOKEN LOADED INTO A STRUCT
 				if(index==sortPos){
+					
 					if (token==NULL){
-						record->sortVal=NULL;					
+						record->sortVal=NULL;
+									
 					} else{
-						record->sortVal=malloc(strlen(token)*sizeof(char));
+						record->sortVal=malloc((strlen(token)+1)*sizeof(char));
 						strcpy(record->sortVal,token);
+						
 					}
 				}
+				
 				if(token!=NULL){
-					record->data[index] = malloc(strlen(token)*sizeof(char));
+					
+					record->data[index] = malloc((strlen(token)+1)*sizeof(char));
 					strcpy(record->data[index], token);
+					
 				} else {
 					record->data[index]=NULL;
+					
 				}				
 				index++;		
 
@@ -408,6 +427,7 @@ void sort(FILE *file, char *colToSort, char* fileName, char *outputDir){
 				printf("ERROR: [%s] invalid CSV!\n",fileName);
 				return;
 			}		
+			//printRecNode(record);
 
 			//ADD RECORD TO LL HERE		
 			addRecToEnd(&frontRec,record);			
@@ -424,7 +444,7 @@ void sort(FILE *file, char *colToSort, char* fileName, char *outputDir){
 	char sortedFileName[lengthSorted];
 	
 	//trim the .csv off the file
-	char* trimmedFileName=malloc(strlen(fileName)*sizeof(char));
+	char* trimmedFileName=malloc((strlen(fileName)+1)*sizeof(char));
 	strcpy(trimmedFileName,fileName);
 	trimmedFileName[strlen(fileName)-4]='\0';
 
@@ -459,6 +479,12 @@ void sort(FILE *file, char *colToSort, char* fileName, char *outputDir){
 
 	writeCSV(frontRec,sorted);
 
+
+	
+	// free(rest);
+	// free(str);
+	// free(token);
+	// free(trimmedFileName);
 	fclose(sorted);
 	fclose(file);
 	freeLL(frontRec);
@@ -767,16 +793,20 @@ int main(int argc, char *argv[] ){ //-----------------------MAIN---------
 	}
 
 	
-	// FILE *file = fopen("t3.csv", "r");
-	// if (file==0){
-	// 	printf("ERROR: %s\n", strerror(errno));
-	// 	exit(EXIT_FAILURE);
-	// }
+//---------------------testing sort	
+	FILE *file = fopen("movie_metadata.csv", "r");
+	if (file==0){
+		printf("ERROR: %s\n", strerror(errno));
+		exit(EXIT_FAILURE);
+	}
 	
 
 
 
-	// sort(file, colToSort, "t3.csv", "");
+	 sort(file, colToSort, "movie_metadata.csv", "");
+	 return 0;
+//---------------------end testing sort
+
 	// printf("DONE SORT TEST\n");
 	// return 0;
 	// char* cwd = (char*)malloc(100*sizeof(char));
@@ -842,6 +872,15 @@ int main(int argc, char *argv[] ){ //-----------------------MAIN---------
 	fclose(pidPrint);
 	remove(fname);
 
+
+	free(currDir);
+	free(fname);
+	free(str);
+	if(hasDir)
+		free(searchDir);
+	if(hasOut)
+		free(outputDir);
+	free(colToSort);
 
 	return 0;
 } //-----------------------------------ENDMAIN-------------------

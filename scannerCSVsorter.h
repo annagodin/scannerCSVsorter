@@ -22,7 +22,7 @@ int endsWith (char *str, char *end);
 int numProc(char *dir);
 
 
-//in sorter.c
+//in scannerCSVsorter.c
 char* stripNewLineChar (char* token,int tokLen);
 char* stripFirstChar (char* token, int tokLen);
 char* stripLastChar (char* token);

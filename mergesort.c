@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
-#include "sorter.h"
+#include "scannerCSVsorter.h"
 
 //converts a string to lower case
 char* toLowerCase (char* str){
