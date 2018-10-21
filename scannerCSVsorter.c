@@ -280,29 +280,31 @@ void sort(FILE *file, char *colToSort, char* fileName, char *outputDir){
 	//get headers
 	fgets(str, 1200, file);
 
-	str=stripNewLineChar(str,strlen(str));
+	
 
-   	char* rest = (char*)malloc(sizeof(char)*800);
-   	rest = str;
+   	char* rest = (char*)malloc(sizeof(char)*1000);
+   	strcpy(rest,str);
    	
+	rest[strlen(rest)-2]='\0';
+
+   	//printf("'%s'\n",rest);
    	hNode *headersFront = NULL;
    	int count = 0;
-   	//printf("hey3\n");
+   //	printf("hey3\n");
    	//tokenizes the headers
    	while ((token = strsep(&rest, ",")) != NULL){
-	
         	//loads headers into array
         	char* data = malloc((strlen(token)+1)*sizeof(char));
-        
+        	
         	hNode *node = malloc(sizeof(hNode));
-        	if (token[strlen(token)-1] == '\n'){
-        		//printf("stripping newline"); 
-				token=stripNewLineChar(token,strlen(token));
-		    } 
+    //     	if (token[strlen(token)-1] == '\n'){
+    //     		//printf("stripping newline"); 
+				// token=stripNewLineChar(token,strlen(token));
+		  //   } 
+		    token = trimWhiteSpace(token);
         	strcpy(data,token);
         	node->data=data;
         	addhNodeToEnd(&headersFront, node);
-  	
         	//finds col pos to sort by
         	if(strcmp(token,colToSort)==0){
         		sortPos=count;       	
@@ -311,14 +313,34 @@ void sort(FILE *file, char *colToSort, char* fileName, char *outputDir){
         	count++;
        }
 
+
+ 		//sets the number of columns
+   		int numCols = count;
+
+
+//------------------------test headers
+  //      int f =0;
+		// hNode *ptr1 = headersFront;
+  //  		while (ptr1!=NULL){
+	 //   		printf("'%s'",ptr1->data);
+	 //   		ptr1=ptr1->next;
+	 //   		if(f<numCols-1){
+	 //   			printf(",");
+	 //   		}
+	 //   		f++;
+  //  		}
+  //  		printf("\n\n\n");	
+//---------------------test headers
+
+
+      
+
        if(sortPos==-1){
        		printf("ERROR: Column specified is not a header in the CSV [%s] that is being processed\n",fileName);
        		return;
        }
 
 
-       //sets the number of columns
-   		int numCols = count;
 
   
    
@@ -343,7 +365,8 @@ void sort(FILE *file, char *colToSort, char* fileName, char *outputDir){
 		//printf("STRING: %s\n",str);
 
 		char* parseStr = (char*)malloc((strlen(str)+1)*sizeof(char)+1);
-		parseStr=str;
+		strcpy(parseStr,str);
+		parseStr[strlen(parseStr)-2]='\0'; //strips newline and stuff
 			//printf("some testing shit\n");
 			int index = 0;
 			while ((token = strsep(&parseStr, ",")) != NULL) {
@@ -436,11 +459,37 @@ void sort(FILE *file, char *colToSort, char* fileName, char *outputDir){
 		i++;
 	} //END FILE
 	
+
+
+
+
+//-------------------------testing
+	// int f =0;
+	// hNode *ptr1 = headersFront;
+ //   	while (ptr1!=NULL){
+ //   		printf("%s",ptr1->data);
+ //   		ptr1=ptr1->next;
+ //   		if(f<numCols-1){
+ //   			printf(",");
+ //   		}
+ //   		f++;
+ //   	}
+ //   	printf("\n");	
+
+	// printAllRecords(frontRec);
+	// printf("\n\n\n");	
+//-------------------------testing
+
+
+
+
 	//sorts the damn LL
 	mergesort(&frontRec);
+
+
 	
 	//length of the name of the sorted file
-	int lengthSorted = strlen(outputDir)+strlen(fileName)+strlen(colToSort)+10;
+	int lengthSorted = strlen(outputDir)+strlen(fileName)+strlen(colToSort)+11;
 	char sortedFileName[lengthSorted];
 	
 	//trim the .csv off the file
@@ -462,8 +511,13 @@ void sort(FILE *file, char *colToSort, char* fileName, char *outputDir){
 	//creates new file with the sorted file name
 	FILE *sorted;
 	sorted=fopen(sortedFileName, "w");
+	
 
+	if (sorted == NULL){
+    	printf("fopen failed, errno = %d\n", errno);
+	}
 
+	
    	int c=0;
    	//prints headers
    	hNode *ptr = headersFront;
@@ -479,17 +533,18 @@ void sort(FILE *file, char *colToSort, char* fileName, char *outputDir){
 
 	writeCSV(frontRec,sorted);
 
-
+	//printf("sorted: %d\n",sorted);
 	
-	// free(rest);
-	// free(str);
-	// free(token);
-	// free(trimmedFileName);
-	fclose(sorted);
+	
+	free(rest);
+	free(str);
+	free(token);
+	free(trimmedFileName);
+	//fclose(sorted);
 	fclose(file);
-	freeLL(frontRec);
+	// freeLL(frontRec);
 	free(frontRec);
-
+	
 
 
 }
@@ -761,10 +816,14 @@ int main(int argc, char *argv[] ){ //-----------------------MAIN---------
 			exit(EXIT_FAILURE);
 		}
 	} else if (argc>7||argc==4||argc==6){
-		if(argc>7)
+		if(argc>7){
 			printf("Error: Too many parameters\n");
-		else
+			printf("Format for parameters: -c <colName> -d <directoryName> -o <outputDirectoryName>\nNote: -d <directoryName> and -o <outputDirectoryName> are optional\n");		
+		}	
+		else {
 			printf("Error: Incorrent arguments\n");
+			printf("Format for parameters: -c <colName> -d <directoryName> -o <outputDirectoryName>\nNote: -d <directoryName> and -o <outputDirectoryName> are optional\n");	
+		}
 		exit(EXIT_FAILURE);
 	}
 	
@@ -793,18 +852,18 @@ int main(int argc, char *argv[] ){ //-----------------------MAIN---------
 	}
 
 	
-//---------------------testing sort	
-	FILE *file = fopen("movie_metadata.csv", "r");
-	if (file==0){
-		printf("ERROR: %s\n", strerror(errno));
-		exit(EXIT_FAILURE);
-	}
+// //---------------------testing sort	
+// 	FILE *file = fopen("movie_metadata.csv", "r");
+// 	if (file==0){
+// 		printf("ERROR: %s\n", strerror(errno));
+// 		exit(EXIT_FAILURE);
+// 	}
 	
 
 
 
-	 sort(file, colToSort, "movie_metadata.csv", "");
-	 return 0;
+// 	 sort(file, colToSort, "movie_metadata.csv", "");
+// 	 return 0;
 //---------------------end testing sort
 
 	// printf("DONE SORT TEST\n");
@@ -876,10 +935,12 @@ int main(int argc, char *argv[] ){ //-----------------------MAIN---------
 	free(currDir);
 	free(fname);
 	free(str);
+	
 	if(hasDir)
 		free(searchDir);
 	if(hasOut)
 		free(outputDir);
+	
 	free(colToSort);
 
 	return 0;
