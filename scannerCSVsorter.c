@@ -121,7 +121,7 @@ char* trimWhiteSpace(char* token){
 	int index, i;
 	index=0;
 	i=0;
-	char* trimmed = malloc(sizeof(char)*strlen(token));
+	char* trimmed = malloc(sizeof(char)*strlen(token)+1);
 	//trim leading
 	while (token[index] == ' '){
 		index++;
@@ -616,9 +616,7 @@ void dirwalk(char *dir,char *out, char *colToSort, FILE *fp){
                 fprintf(fp, "%d\n", pid1);
                 fflush(fp); 
                
-
-                
-                waitpid(pid1, &status1, WUNTRACED);
+                //waitpid(pid1, &status1, WUNTRACED);
               
             }
 
@@ -638,8 +636,6 @@ void dirwalk(char *dir,char *out, char *colToSort, FILE *fp){
                 	continue;
                 }
 
-
-
                 //printf("%s \n",entry->d_name); 
                 pid2=fork();
                 if(pid2==0){ //child
@@ -656,11 +652,8 @@ void dirwalk(char *dir,char *out, char *colToSort, FILE *fp){
                        
                     fprintf(fp, "%d\n", pid2);
                     fflush(fp); 
-                    
-
                    
-                    
-                    waitpid(pid2, &status2, WUNTRACED);
+                   // waitpid(pid2, &status2, WUNTRACED);
                    
                  }
             
@@ -670,8 +663,12 @@ void dirwalk(char *dir,char *out, char *colToSort, FILE *fp){
         }
 
     }
+
+
      	chdir("..");
    		closedir(dp);
+
+   		wait(NULL);
 }
 
 
@@ -909,6 +906,10 @@ int main(int argc, char *argv[] ){ //-----------------------MAIN---------
 		dirwalk(cwd, "", colToSort,pidRec);
 	}
 	fclose(pidRec);
+
+
+
+	wait();
 
 	int init = getpid();
 	printf("\nInitial PID: %d\n", init);
