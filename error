@@ -1,0 +1,28 @@
+ERROR: [Makefile] is not a .csv
+ERROR: [mergesort.c] is not a .csv
+ERROR: [mergesort.o] is not a .csv
+ERROR: [searchDir.o] is not a .csv
+ERROR: [searchDir.c] is not a .csv
+ERROR: [scannerCSVsorter.o] is not a .csv
+ERROR: [scannerCSVsorter] is not a .csv
+ERROR: Column specified is not a header in the CSV [movie_metadata.csv] that is being processed
+ERROR: [sorter] is not a .csv
+ERROR: Column specified is not a header in the CSV [t3.csv] that is being processed
+ERROR: [a.out] is not a .csv
+ERROR: [small-sorted-food.csv] is already sorted
+ERROR: [sc.csv] invalid CSV!
+ERROR: [somefile-sorted-food.csv] is already sorted
+ERROR: Column specified is not a header in the CSV [smallerdata.csv] that is being processed
+ERROR: [forkTest.c] is not a .csv
+ERROR: [searchDir] is not a .csv
+ERROR: Column specified is not a header in the CSV [subtest.csv] that is being processed
+ERROR: [scannerCSVsorter.c] is not a .csv
+ERROR: [shit-sorted-food.csv] is already sorted
+ERROR: Column specified is not a header in the CSV [test.csv] that is being processed
+ERROR: [scannerCSVsorter.h] is not a .csv
+ERROR: [shit2-sorted-food.csv] is already sorted
+ERROR: [sorter.o] is not a .csv
+ERROR: Column specified is not a header in the CSV [smallerdata24.csv] that is being processed
+ERROR: Column specified is not a header in the CSV [dataset13.csv] that is being processed
+ERROR: [Asst1Doc.pdf] is not a .csv
+ERROR: [error] is not a .csv

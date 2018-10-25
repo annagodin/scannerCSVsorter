@@ -250,7 +250,7 @@ void writeCSV (CSVrecord *frontRec, FILE *sorted){
 //writes to a new file
 void sort(FILE *file, char *colToSort, char* fileName, char *outputDir){
 	// printf("coltosort: [%s]\n",colToSort);
-	// printf("output dirrrrrrrr [%s]\n",outputDir);
+	//printf("output dirrrrrrrr [%s]\n",outputDir);
 
 	//if the specified output directory does not have a slash at the end - add one
 	if (strcmp(outputDir,"")!=0&&outputDir[strlen(outputDir)-1]!='/'){
@@ -280,7 +280,7 @@ void sort(FILE *file, char *colToSort, char* fileName, char *outputDir){
    	char* rest = (char*)malloc(sizeof(char)*1000);
    	strcpy(rest,str);
    	
-	rest[strlen(rest)-2]='\0';
+	rest[strlen(rest)-1]='\0';
    	//printf("'%s'\n",rest);
    	hNode *headersFront = NULL;
    	int count = 0;
@@ -460,7 +460,7 @@ void sort(FILE *file, char *colToSort, char* fileName, char *outputDir){
 
 
 
-//-------------------------testing
+//-------------------------testing printing all records
 	// int f =0;
 	// hNode *ptr1 = headersFront;
  //   	while (ptr1!=NULL){
@@ -513,7 +513,8 @@ void sort(FILE *file, char *colToSort, char* fileName, char *outputDir){
 	
 
 	if (sorted == NULL){
-    	fprintf(stderr,"fopen failed, errno = %d\n", errno);
+		fprintf(stderr,"path attempted: [%s]", sortedFileName);
+    	fprintf(stderr,"ffopen failed, errno = %d\n", errno);
 	}
 
 	
@@ -581,7 +582,7 @@ void dirwalk(char *dir,char *out, char *colToSort, FILE *fp){
     struct stat statbuf;
     int status1, status2;
     int pid1, pid2;
-
+    //printf("\tOUT!!! [%s]\n",out);
     if((dp = opendir(dir)) == NULL) {
         fprintf(stderr,"Error: cannot open directory: %s\n",dir);
         exit(EXIT_FAILURE);
@@ -913,19 +914,21 @@ int main(int argc, char *argv[] ){ //-----------------------MAIN---------
 	//fclose(pidRec);
 
 	//printf("fname is %s\n", fname);
-	printf("currdir %s\n",currDir);
+	//printf("currdir %s\n",currDir);
 	char *outputFull;
 	if(hasOut){
 		if(outputDir[0]=='/'){
 		//printf("absolute file name\n");
+			outputFull = (char*)malloc(strlen(outputDir)+2);
+			strcpy(outputFull,outputDir);
 		}
 		else {
-			//printf("relative file name\n");
+			printf("relative file name\n");
 			outputFull = (char*)malloc(strlen(currDir)+3+strlen(outputDir));
 			strcpy(outputFull,currDir);
 			strcat(outputFull,"/");
 			strcat(outputFull, outputDir);
-			//printf("output full %s\n\n",outputFull);
+			printf("\t\t\t\toutput full %s\n\n",outputFull);
 		}
 	}
 	
